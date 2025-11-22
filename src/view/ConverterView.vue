@@ -56,14 +56,17 @@ const handleConvert = async (options, loading) => {
 
   outputCode.value = "";
   try {
-    const res = await fetch("http://localhost:3000/api/convert/stream", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        code: inputCode.value,
-        options: selectedOptions.value,
-      }),
-    });
+    const res = await fetch(
+      "https://vue-converter.onrender.com/api/convert/stream",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: inputCode.value,
+          options: selectedOptions.value,
+        }),
+      }
+    );
 
     if (!res.ok) {
       const errorText = await res.text();
@@ -87,22 +90,22 @@ const handleConvert = async (options, loading) => {
       const lines = chunk
         .split("\n")
         .filter((line) => line.trim().startsWith("data: "));
-      
+
       for (const line of lines) {
         try {
           const data = JSON.parse(line.replace(/^data:\s*/, ""));
-          
+
           if (data.token) {
             fullOutput += data.token;
             outputCode.value = fullOutput;
           }
-          
+
           if (data.error) {
             outputCode.value = `// ❌ ${data.error}`;
             streamComplete = true;
             break;
           }
-          
+
           if (data.done) {
             outputCode.value = data.full?.trim() || fullOutput.trim();
             streamComplete = true;
@@ -113,14 +116,13 @@ const handleConvert = async (options, loading) => {
           // Don't set loading to false here - continue processing other lines
         }
       }
-      
+
       // Break out of outer loop if stream is complete
       if (streamComplete) break;
     }
-    
+
     // Only set loading to false after all streaming is complete
     loading.value = false;
-    
   } catch (err) {
     console.error("Network or server error:", err);
     outputCode.value =
